@@ -1,0 +1,680 @@
+
+<html>
+
+<link href="css/bootstrap.min.css" rel="stylesheet"/>
+<script src="js/jquery-3.3.1.min.js"></script>
+<script src="js/bootstrap.min.js"></script>
+
+
+<script src="js/bootbox.min.js"></script>
+<script src="js/bootbox.locales.min.js"></script>
+
+<!-- 引入DataTables的css文件 -->
+<link href="DataTables/css/jquery.dataTables.min.css" rel="stylesheet" />
+<script src="DataTables/js/jquery.dataTables.min.js"></script>
+
+<!-- 引入fileinput文件上传插件的css文件和js文件 -->
+<link href="bootstrap-fileinput/css/fileinput.min.css" rel="stylesheet" />
+<script src="bootstrap-fileinput/js/fileinput.min.js"></script>
+<script src="bootstrap-fileinput/js/locales/zh.js"></script>
+
+
+<!-- 日期插件 -->
+<link href="bootstrap-datetimepicker/css/bootstrap-datetimepicker.min.css" rel="stylesheet"/>
+<script src="bootstrap-datetimepicker/js/moment-with-locales.js"></script>
+<script src="bootstrap-datetimepicker/js/bootstrap-datetimepicker.min.js"></script>
+
+<!-- 下拉框 -->
+<script src="bootstrap-select/js/bootstrap-select.min.js"></script>
+<script src="bootstrap-select/js/i18n/defaults-zh_CN.min.js"></script>
+<link href="bootstrap-select/css/bootstrap-select.min.css" rel="stylesheet"/>
+
+<!-- 日期格式 -->
+<script src="date-format.js"></script>
+
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+
+<body>
+
+
+<!-- 条件查询+表头 -->
+<div class="panel panel-primary">
+    <div class="panel-heading">
+        条件查询
+    </div>
+    <div class="panel-body">
+        <form class="form-horizontal">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">名称:</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="name" placeholder="请输入名称">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">价格:</label>
+                            <div class="col-sm-10">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="minPrice">
+                                    <span class="input-group-addon"><--></span>
+                                    <input type="text" class="form-control" id="maxPrice">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div style="padding-left:110px">
+                        <button type="button" onclick="search()" class="btn btn-primary">
+                            <span class="glyphicon glyphicon-search"></span>查询
+                        </button>
+                        &nbsp;
+                        <button type="reset" class="btn btn-danger">
+                            <span class="glyphicon glyphicon-refresh"></span>&nbsp;&nbsp;重置
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 列表面板 -->
+    <div class="panel panel-primary">
+        <div class="panel-heading">列表</div>
+        <div class="panel-body">
+            <div style="margin-bottom:10px">
+                <button type="button" onclick="showAddDrugDiv()" class="btn btn-primary">
+                    <span class="glyphicon glyphicon-plus"></span>新增
+                </button>
+                <button type="button" onclick="batchDelete()" class="btn btn-danger">
+                    <span class="glyphicon glyphicon-minus"></span>批量删除
+                </button>
+            </div>
+            <table id="drugTable" class="table table-striped table-bordered table-hover table-condensed">
+                <thead>
+                <tr>
+                    <th>
+                        <input type="checkbox" />
+                    </th>
+                    <th>订单编号</th>
+                    <th>商品名称</th>
+                    <th>价格</th>
+                    <th>数量</th>
+                    <th>小计</th>
+                    <th>操作</th>
+                </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+
+
+<!-- 隐藏的新增界面的 -->
+<div id="addDrugDiv"  style="display:none">
+
+    <form class="form-horizontal" >
+        <div class="panel-body" >
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">商品选择:</label>
+                <div class="col-sm-4" id="addProduct" >
+
+                </div>
+            </div>
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">价格</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="addPrice" readonly/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">购买数量</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="addCount"  onchange="countChange()"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">小计</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="addSubtotal" readonly/>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+
+
+<!-- 隐藏的修改界面的 -->
+<div id="updateDrugDiv"  style="display:none">
+
+    <form class="form-horizontal" >
+        <div class="panel-body" >
+            <input type="hidden" class="form-control" id="updateOrderId"   />
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">名称:</label>
+                <div class="col-sm-4">
+                    <select id="updateProduct"  onchange="changeArea1(this)" class="form-control">
+                        <option value="-1">请选择</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">价格</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="updatePrice" readonly />
+                </div>
+            </div>
+
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">数量</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="updateCount" onchange="updateCountChange()"/>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label  class="col-sm-2 control-label">小计</label>
+                <div class="col-sm-4">
+                    <input type="text" class="form-control" id="updateSubtotal" readonly/>
+                </div>
+            </div>
+
+        </div>
+    </form>
+
+</div>
+
+
+
+</body>
+
+<!-- 用于页面加载之后查询的方法 -->
+<script type="text/javascript">
+
+    $(function(){
+        selectDrugList(1);
+    })
+
+    function search(){
+        //重新使用ajax加载数据
+        drugTable.ajax.reload();
+
+    }
+
+
+    var drugTable;
+    function selectDrugList(pageIndex){
+        drugTable = $("#drugTable").DataTable({
+                //开启服务端模式
+                serverSide:true,
+                //开启是否显示处理状态
+                processing:true,
+                ordering:false,
+                //进行国际化处理配置
+                language: {
+                    "sProcessing": "处理中...",
+                    "sLengthMenu": "显示 _MENU_ 项结果",
+                    "sZeroRecords": "没有匹配结果",
+                    "sInfo": "显示第 _START_ 至 _END_ 项结果，共 _TOTAL_ 项",
+                    "sInfoEmpty": "显示第 0 至 0 项结果，共 0 项",
+                    "sInfoFiltered": "(由 _MAX_ 项结果过滤)",
+                    "sInfoPostFix": "",
+                    "sSearch": "搜索:",
+                    "sUrl": "",
+                    "sEmptyTable": "表中数据为空",
+                    "sLoadingRecords": "载入中...",
+                    "sInfoThousands": ",",
+                    "oPaginate": {
+                        "sFirst": "首页",
+                        "sPrevious": "上页",
+                        "sNext": "下页",
+                        "sLast": "末页"
+                    },
+                    "oAria": {
+                        "sSortAscending": "以升序排列此列",
+                        "sSortDescending": "以降序排列此列"
+                    }
+                },
+                //开启是否显示搜索框
+                searching:true,
+                //设置每页显示条数下拉框的值
+                lengthMenu:[2,5,10,15],
+                ajax:{
+                    //设置请求的地址
+                    url:"http://localhost:8081/OrderController/queryOrder",
+
+                    dataSrc:function(f){
+                        if(f.status==200){
+                            f.draw =f.data.draw;
+                            f.recordsTotal=f.data.recordsTotal;
+                            f.recordsFiltered=f.data.recordsFiltered;
+                            return f.data.data;
+                        }else{
+                            return "";
+                        }
+                    },
+                    data:function(p){
+                        //获取查询条件的值
+
+                        p.name = $("#name").val();
+                        p.minPrice = $("#minPrice").val();
+                        p.maxPrice = $("#maxPrice").val();
+
+                    }
+                },
+
+
+                "columns":[
+                    {
+                        "data":"orderId",
+                        "render":function(data){
+                            return "<input type=\"checkbox\" name=\"id\" value=\"" + data + "\" />";
+                        }
+                    },
+                    {"data":"orderId"},
+                    {"data":"productName"},
+                    {"data":"productPrice"},
+
+
+                    {"data":"count"},
+                    {"data":"subtotal"},
+
+                    {
+                        "data":"orderId",
+                        "render":function(data){
+                            return '<div class="btn-group btn-group-xs">'+
+                                '<button type="button" onclick="showUpdateDrugDiv('+data+')" class="btn btn-primary">'+
+                                '	<span class="glyphicon glyphicon-pencil"></span>&nbsp;修改'+
+                                '</button>'+
+                                '<button type="button" onclick="deleteDrug('+data+')" class="btn btn-danger">'+
+                                '	<span class="glyphicon glyphicon-trash"></span>&nbsp;删除'+
+                                '</button>'+
+                                '</div>';
+                        }
+                    }
+                ]
+            }
+        );
+    }
+</script>
+
+
+<!-- 新增 -->
+<script type="text/javascript">
+
+    var addDrugDivHTML
+    $(function(){
+        selectDrugAreaList();
+        addDrugDivHTML = $("#addDrugDiv").html();
+
+    })
+
+    function countChange(){
+
+        var param = {};
+        param.count = $("#addCount").val()
+        param.productPrice = $("#addPrice").val()
+        $.ajax({
+            data:param,
+            dataType:"json",
+            url:"http://localhost:8081/OrderController/Count",
+            type:"post",
+            success:function(data){
+                $("#addSubtotal").val(data);
+
+            },
+            error:function(){
+                alert("出错!!!")
+            },
+        })
+    }
+
+    //地区下拉框
+    var areaArr;
+
+    function selectDrugAreaList(){
+        $.ajax({
+            data:{},
+            dataType:"json",
+            url:"http://localhost:8081/OrderController/selectAreaList",
+            type:"post",
+            success:function(data){
+                areaArr = data;
+                var areaSelectHTML = "<select id='areaSelect' class='selt mr5' onchange='changeArea(this)'>";
+                areaSelectHTML += "<option value='-1'>--请选择--</option>";
+                for (var i = 0; i < data.data.length; i++) {
+                    areaSelectHTML += "<option " +  " value='" + data.data[i].proid + "'>" + data.data[i].pname + "</option>";
+                }
+                areaSelectHTML += "</select>";
+
+                $("#addProduct").append(areaSelectHTML);
+
+
+            },
+            error:function(){
+                alert("地区下拉框出错!!!")
+            },
+        })
+    }
+
+
+    function changeArea(obj){
+        var proid = obj.value
+        if(proid != -1){
+            $.ajax({
+                data:{proid:proid},
+                dataType:"json",
+                url:"http://localhost:8081/OrderController/selectOne",
+                type:"post",
+                success:function(data){
+                    $("#addPrice").val(data.data.price);
+                    $("#addCount").val(null);
+                    $("#addSubtotal").val(null);
+                },
+                error:function(){
+                    alert("出错!!!")
+                },
+            })
+        }else{
+            $("#addPrice").val(null);
+            $("#addCount").val(null);
+            $("#addSubtotal").val(null);
+        }
+
+    }
+
+    function showAddDrugDiv(){
+
+        bootbox.confirm({
+            title:"新增",
+            message:$("#addDrugDiv form"),
+            size:"lg",
+            scrollable:true,
+            callback:function(result){
+                //如果点击了确认按钮，则提交新增div表单中的数据
+                if(result){
+
+                    var param = {};
+                    //【1】获取新增div表单中的值
+                    //获取库存
+                    param.productId = $("#areaSelect").val();
+                    param.count = $("#addCount").val();
+                    param.subtotal = $("#addSubtotal").val();
+                    param.productPrice = $("#addPrice").val();
+
+                    //发起新增的ajax请求
+                    $.ajax({
+                        url:"http://localhost:8081/OrderController/addOrder",
+                        type:"post",
+                        dataType:"json",
+                        data:param,
+                        success:function(result){
+                            if(result.status == 200){
+                                bootbox.alert({
+                                    title:"<b>成功提示</b>",
+                                    message:"恭喜您添加成功!",
+                                    buttons:{
+                                        ok:{
+                                            label:"确定"
+                                        }
+                                    }
+                                });
+                                search();
+                            }
+                        },
+                        error:function(){
+                            alert("新增失败，请联系管理员！");
+                        }
+                    });
+                }
+                //重新赋值   以防第二次点添加 不出表格
+                $("#addDrugDiv").html(addDrugDivHTML);
+                //重置时间选择   下拉框 图片域
+                selectDrugAreaList();
+            },
+
+            buttons:{
+                confirm:{
+                    label:"确认",
+                    className:"btn btn-success"
+                },
+                cancel:{
+                    label:"取消",
+                    className:"btn btn-danger"
+                }
+            }
+        });
+    }
+
+</script>
+
+
+<!-- 修改 -->
+<script>
+    var updateDrugDivHTML;
+    $(function(){
+
+        updateDrugDivHTML = $("#updateDrugDiv").html();
+
+    })
+
+    function showUpdateDrugDiv(orderId){
+        $.ajax({
+            data:{"id":orderId},
+            dataType:"json",
+            url:"http://localhost:8081/OrderController/toUpdateOrder",
+            type:"post",
+            success:function(result){
+                bootbox.confirm({
+                    title:"修改",
+                    message:$("#updateDrugDiv form"),
+                    size:"lg",
+                    scrollable:true,
+                    callback:function(result){
+
+                        //如果点击了确认按钮，则提交修改div表单中的数据
+                        if(result){
+
+                            var param = {};
+                            //获取值
+                            param.productId = $("#updateProduct").val();
+                            param.count = $("#updateCount").val();
+                            param.subtotal = $("#updateSubtotal").val();
+                            param.productPrice = $("#updatePrice").val();
+                            param.orderId = $("#updateOrderId").val();
+
+                            //发起新增手机的ajax请求
+                            $.ajax({
+                                url:"http://localhost:8081/OrderController/updateOrder",
+                                type:"post",
+                                dataType:"json",
+                                data:param,
+                                success:function(result){
+                                    if(result.status == 200){
+                                        bootbox.alert({
+                                            title:"<b>成功提示</b>",
+                                            message:"恭喜您修改成功!",
+                                            buttons:{
+                                                ok:{
+                                                    label:"确定"
+                                                }
+                                            }
+                                        });
+                                        search();
+                                    }
+                                },
+                                error:function(){
+                                    alert("修改失败，请联系管理员！");
+                                }
+                            });
+                        }
+
+                        //重新赋值   以防第二次点 不出表格
+                        $("#updateDrugDiv").html(updateDrugDivHTML);
+                        //重置 文件域 时间选择
+
+                    },
+
+                    buttons:{
+                        confirm:{
+                            label:"确认",
+                            className:"btn btn-success"
+                        },
+                        cancel:{
+                            label:"取消",
+                            className:"btn btn-danger"
+                        }
+                    }
+                });
+
+
+                //初始化修改表单中产地下拉框
+                var areaOptionsHTML = "";
+                for(var i = 0 ; i < areaArr.data.length; i ++ ){
+                    areaOptionsHTML += "<option  value='" + areaArr.data[i].proid +  "'>" + areaArr.data[i].pname + "</option>";
+                }
+                $("#updateProduct").append(areaOptionsHTML);
+                $("#updateProduct").val(result.data.productId);
+
+
+                var result = result.data;
+                //回显表单中的数据
+                $("#updatePrice").val(result.productPrice);
+                $("#updateCount").val(result.count);
+                $("#updateSubtotal").val(result.subtotal);
+                $("#updateOrderId").val(result.orderId);
+
+
+            },
+            error:function(){
+
+                alert("无法修改   别点了!!!")
+            }
+        })
+
+    }
+
+
+    function updateCountChange(){
+        var param = {};
+        param.count = $("#updateCount").val()
+        param.productPrice = $("#updatePrice").val()
+        $.ajax({
+            data:param,
+            dataType:"json",
+            url:"http://localhost:8081/OrderController/Count",
+            type:"post",
+            success:function(data){
+                $("#updateSubtotal").val(data);
+
+            },
+            error:function(){
+                alert("出错!!!")
+            },
+        })
+    }
+
+
+
+    function changeArea1(obj){
+        var proid = obj.value
+        if(proid != -1){
+            $.ajax({
+                data:{proid:proid},
+                dataType:"json",
+                url:"http://localhost:8081/OrderController/selectOne",
+                type:"post",
+                success:function(data){
+                    $("#updatePrice").val(data.data.price);
+                    $("#updateCount").val(null);
+                    $("#updateSubtotal").val(null);
+                },
+                error:function(){
+                    alert("出错!!!")
+                },
+            })
+        }else{
+            $("#updatePrice").val(null);
+            $("#updateCount").val(null);
+            $("#updateSubtotal").val(null);
+        }
+    }
+
+</script>
+
+
+<!-- 删除 -->
+<script>
+
+    function deleteDrug(orderId){
+        alert(orderId)
+        //弹出一个确认框
+        bootbox.confirm({
+            title:"删除提示",
+            message:"您确定要删除吗?",
+            buttons:{
+                //設置確定按鈕的文字和樣式
+                confirm:{
+                    label:"确定",
+                    className:"btn btn-success"
+                },
+                //設置取消按鈕的文字和樣式
+                cancel:{
+                    label:"取消",
+                    className:"btn btn-danger"
+                }
+            },
+            callback:function(result){
+                //如果用户点击了确认按钮
+                if(result){
+                    //发起一个删除的ajax请求
+                    $.ajax({
+                        url:"http://localhost:8081/OrderController/deleteOrder",
+                        data:{orderId:orderId},
+                        type:"post",
+                        dataType:"json",
+                        success:function(result){
+                            if(result.status == 200){
+                                //重新加载表格中的数据
+                                alert("删除成功")
+                                search();
+                            }else{
+                                alert("删除失败1!");
+                            }
+                        },
+                        error:function(){
+                            alert("删除失败2!");
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+
+</script>
+
+
+</html>
